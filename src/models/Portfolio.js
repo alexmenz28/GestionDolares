@@ -97,19 +97,100 @@ export class Portfolio {
     }
 
     /**
-     * Obtiene estadísticas del portafolio
+     * Obtiene las tasas únicas de compra para una ubicación específica
+     * @param {string} location - Ubicación a filtrar (null para todas)
+     * @returns {number[]} Array de tasas únicas ordenadas
+     */
+    getUniqueRatesByLocation(location) {
+        let transactions = this.transactions;
+        
+        if (location && location !== 'all') {
+            transactions = this.filterByLocation(location);
+        }
+        
+        const rates = new Set();
+        transactions.forEach(t => {
+            rates.add(t.rateBOB);
+        });
+        
+        // Convertir a array y ordenar
+        return Array.from(rates).sort((a, b) => a - b);
+    }
+
+    /**
+     * Filtra transacciones por ubicación
+     * @param {string} location - Ubicación a filtrar (null para todas)
+     * @returns {Transaction[]}
+     */
+    filterByLocation(location) {
+        if (!location || location === 'all') {
+            return this.transactions;
+        }
+        return this.transactions.filter(t => t.location === location);
+    }
+
+    /**
+     * Filtra transacciones por tasa específica
+     * @param {number} rate - Tasa exacta a filtrar (null para todas)
+     * @returns {Transaction[]}
+     */
+    filterByRate(rate) {
+        if (rate === null || rate === undefined) {
+            return this.transactions;
+        }
+        return this.transactions.filter(t => t.rateBOB === rate);
+    }
+
+    /**
+     * Filtra transacciones por múltiples criterios
+     * @param {Object} filters - Objeto con filtros: { location, rate }
+     * @returns {Transaction[]}
+     */
+    filterTransactions(filters = {}) {
+        let filtered = [...this.transactions];
+
+        // Filtrar por ubicación
+        if (filters.location && filters.location !== 'all') {
+            filtered = filtered.filter(t => t.location === filters.location);
+        }
+
+        // Filtrar por tasa específica
+        if (filters.rate !== null && filters.rate !== undefined) {
+            filtered = filtered.filter(t => t.rateBOB === filters.rate);
+        }
+
+        return filtered;
+    }
+
+    /**
+     * Obtiene estadísticas del portafolio con filtros opcionales
      * @param {number} currentRate - Tasa actual BOB/USD
+     * @param {Object} filters - Filtros opcionales: { location, rate }
      * @returns {Object}
      */
-    getStatistics(currentRate) {
+    getStatistics(currentRate, filters = {}) {
+        // Verificar si hay filtros activos (no null/undefined)
+        const hasActiveFilters = filters && (
+            (filters.location !== null && filters.location !== undefined) ||
+            (filters.rate !== null && filters.rate !== undefined)
+        );
+
+        // Aplicar filtros si existen
+        const filteredTransactions = hasActiveFilters
+            ? this.filterTransactions(filters)
+            : this.transactions;
+
+        // Crear un portafolio temporal con transacciones filtradas
+        const filteredPortfolio = new Portfolio(filteredTransactions);
+
         return {
-            totalUSD: this.getTotalUSD(),
-            totalInvestedBOB: this.getTotalInvestedBOB(),
-            currentValueBOB: this.getCurrentValue(currentRate),
-            profitLoss: this.getTotalProfitLoss(currentRate),
-            roi: this.getTotalROI(currentRate),
-            averageCostPerUSD: this.getAverageCostPerUSD(),
-            transactionCount: this.transactions.length
+            totalUSD: filteredPortfolio.getTotalUSD(),
+            totalInvestedBOB: filteredPortfolio.getTotalInvestedBOB(),
+            currentValueBOB: filteredPortfolio.getCurrentValue(currentRate),
+            profitLoss: filteredPortfolio.getTotalProfitLoss(currentRate),
+            roi: filteredPortfolio.getTotalROI(currentRate),
+            averageCostPerUSD: filteredPortfolio.getAverageCostPerUSD(),
+            transactionCount: filteredTransactions.length
         };
     }
 }

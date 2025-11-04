@@ -23,7 +23,12 @@ export class DashboardView {
             roi: document.getElementById('roi'),
             // Actions
             refreshRatesBtn: document.getElementById('refresh-rates-btn'),
-            addTransactionBtn: document.getElementById('add-transaction-btn')
+            addTransactionBtn: document.getElementById('add-transaction-btn'),
+            // Filters
+            filterLocation: document.getElementById('filter-location'),
+            filterRate: document.getElementById('filter-rate'),
+            clearFiltersBtn: document.getElementById('clear-filters-btn'),
+            filterCount: document.getElementById('filter-count')
         };
     }
 
@@ -163,16 +168,116 @@ export class DashboardView {
     }
 
     /**
+     * Obtiene los valores actuales de los filtros
+     * @returns {Object}
+     */
+    getFilters() {
+        const location = this.elements.filterLocation?.value || 'all';
+        const rate = this.elements.filterRate?.value 
+            ? parseFloat(this.elements.filterRate.value) 
+            : null;
+
+        return {
+            location: location === 'all' ? null : location,
+            rate: rate !== null && !isNaN(rate) ? rate : null
+        };
+    }
+
+    /**
+     * Actualiza las opciones del selector de tasa según la ubicación seleccionada
+     * @param {number[]} rates - Array de tasas únicas
+     */
+    updateRateOptions(rates) {
+        const select = this.elements.filterRate;
+        if (!select) return;
+
+        // Limpiar opciones existentes (excepto la primera)
+        select.innerHTML = '<option value="">Todas las tasas</option>';
+
+        if (rates && rates.length > 0) {
+            // Habilitar el selector
+            select.disabled = false;
+            rates.forEach(rate => {
+                const option = document.createElement('option');
+                option.value = rate;
+                option.textContent = `${rate.toFixed(2)} BOB/USD`;
+                select.appendChild(option);
+            });
+        } else {
+            // Si no hay tasas, deshabilitar el selector y mostrar mensaje
+            select.disabled = true;
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No hay transacciones con este tipo';
+            select.appendChild(option);
+        }
+    }
+
+    /**
+     * Limpia todos los filtros
+     */
+    clearFilters() {
+        if (this.elements.filterLocation) {
+            this.elements.filterLocation.value = 'all';
+        }
+        if (this.elements.filterRate) {
+            this.elements.filterRate.value = '';
+            this.elements.filterRate.disabled = false;
+        }
+        // Actualizar opciones de tasa cuando se limpia
+        if (this.onLocationChange) {
+            this.onLocationChange();
+        }
+    }
+
+    /**
+     * Actualiza el contador de transacciones filtradas
+     * @param {number} count
+     */
+    updateFilterCount(count) {
+        if (this.elements.filterCount) {
+            this.elements.filterCount.textContent = count;
+        }
+    }
+
+    /**
      * Bind de eventos
      * @param {Function} onRefreshRates
      * @param {Function} onAddTransaction
+     * @param {Function} onFiltersChange
+     * @param {Function} onClearFilters
      */
-    bindEvents(onRefreshRates, onAddTransaction) {
+    bindEvents(onRefreshRates, onAddTransaction, onFiltersChange, onClearFilters) {
         if (this.elements.refreshRatesBtn) {
             this.elements.refreshRatesBtn.addEventListener('click', onRefreshRates);
         }
         if (this.elements.addTransactionBtn) {
             this.elements.addTransactionBtn.addEventListener('click', onAddTransaction);
+        }
+        
+        // Eventos de filtros
+        if (this.elements.filterLocation) {
+            this.elements.filterLocation.addEventListener('change', () => {
+                // Cuando cambia la ubicación, actualizar las tasas disponibles
+                if (onFiltersChange) {
+                    // Primero actualizar las opciones de tasa, luego aplicar filtros
+                    if (this.onLocationChange) {
+                        this.onLocationChange();
+                    }
+                    onFiltersChange();
+                }
+            });
+        }
+        if (this.elements.filterRate) {
+            this.elements.filterRate.addEventListener('change', onFiltersChange);
+        }
+        if (this.elements.clearFiltersBtn) {
+            this.elements.clearFiltersBtn.addEventListener('click', () => {
+                this.clearFilters();
+                if (onClearFilters) {
+                    onClearFilters();
+                }
+            });
         }
     }
 }

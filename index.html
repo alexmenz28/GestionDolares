@@ -145,6 +145,48 @@
 
                     </div>
 
+                    <!-- Filters Section -->
+                    <div class="filters-section">
+                        <div class="filters-header">
+                            <h3>Análisis Filtrado</h3>
+                            <div class="filter-info-header" id="filter-info-header">
+                                <span class="filter-count-badge" id="filter-count">0</span>
+                                <span class="filter-count-text">transacción(es)</span>
+                            </div>
+                        </div>
+                        <div class="filters-content">
+                            <div class="filters-grid">
+                                <div class="filter-group">
+                                    <label for="filter-location">Tipo de Transacción</label>
+                                    <select id="filter-location" class="filter-select">
+                                        <option value="all">Todas las ubicaciones</option>
+                                        <option value="efectivo">Efectivo</option>
+                                        <option value="binance">Binance</option>
+                                        <option value="banco">Banco</option>
+                                        <option value="casa-cambio">Casa de Cambio</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filter-rate">Tasa de Compra</label>
+                                    <select id="filter-rate" class="filter-select">
+                                        <option value="">Todas las tasas</option>
+                                    </select>
+                                    <small class="filter-hint">Selecciona primero el tipo</small>
+                                </div>
+                            </div>
+                            <div class="filter-actions">
+                                <button id="clear-filters-btn" class="btn-clear-filters">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                    Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Portfolio Summary -->
                     <div class="portfolio-summary">
                         <div class="summary-card">

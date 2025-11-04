@@ -28,11 +28,19 @@ export class DashboardController {
         await this.loadTransactions();
         await this.loadExchangeRate();
 
+        // Configurar callback para actualizar tasas cuando cambia la ubicación
+        this.view.onLocationChange = () => this.updateRateOptions();
+
         // Bind de eventos
         this.view.bindEvents(
             () => this.refreshRates(),
-            () => this.onAddTransaction()
+            () => this.onAddTransaction(),
+            () => this.onFiltersChange(),
+            () => this.onClearFilters()
         );
+
+        // Inicializar opciones de tasa
+        this.updateRateOptions();
 
         // Actualizar vista inicial
         this.updateView();
@@ -175,9 +183,40 @@ export class DashboardController {
         const rateForCalculations = this.currentRate?.rate || 
                                    (this.allRates.blackMarket?.rate || this.allRates.official?.rate || 0);
 
-        // Actualizar resumen del portafolio
-        const statistics = this.portfolio.getStatistics(rateForCalculations);
+        // Obtener filtros actuales
+        const filters = this.view.getFilters();
+        
+        // Filtrar transacciones para obtener el conteo
+        const filteredTransactions = this.portfolio.filterTransactions(filters);
+        this.view.updateFilterCount(filteredTransactions.length);
+
+        // Actualizar resumen del portafolio con filtros aplicados
+        const statistics = this.portfolio.getStatistics(rateForCalculations, filters);
         this.view.updatePortfolioSummary(statistics);
+    }
+
+    /**
+     * Actualiza las opciones de tasa según la ubicación seleccionada
+     */
+    updateRateOptions() {
+        const location = this.view.elements.filterLocation?.value || 'all';
+        const rates = this.portfolio.getUniqueRatesByLocation(location);
+        this.view.updateRateOptions(rates);
+    }
+
+    /**
+     * Handler cuando cambian los filtros
+     */
+    onFiltersChange() {
+        this.updateView();
+    }
+
+    /**
+     * Handler para limpiar filtros
+     */
+    onClearFilters() {
+        this.updateRateOptions();
+        this.updateView();
     }
 
     /**
@@ -193,6 +232,7 @@ export class DashboardController {
      */
     async updatePortfolio() {
         await this.loadTransactions();
+        this.updateRateOptions();
         this.updateView();
     }
 
